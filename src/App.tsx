@@ -56,6 +56,7 @@ function App() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
   const [successValidation, setSuccessValidation] = useState<any>(false);
+  const [alreadyValidated, setAlreadyValidated] = useState(false);
   const [errorValidation, setErrorValidation] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -72,6 +73,16 @@ function App() {
       setPasswordError(true);
     }
   };
+
+  useEffect(() => {
+    if (localStorage.getItem("sistema-ellen")) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+      setLoginSuccess(true);
+    }
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -105,18 +116,19 @@ function App() {
         <ListaConvidados />
       ) : isValidatingInvite ? (
         <Card sx={{ p: 5, m: 2 }}>
-          {successValidation &&
-            (successValidation.user.confirmado ? (
-              <Alert severity="error">
-                <AlertTitle>Erro</AlertTitle>
-                Convidado {successValidation.user.nome} ja foi validado
-              </Alert>
-            ) : (
-              <Alert severity="success">
-                <AlertTitle>Ingresso validado!</AlertTitle>
-                convidado: {successValidation.user.nome}
-              </Alert>
-            ))}
+          {successValidation && (
+            <Alert severity="success">
+              <AlertTitle>Ingresso validado!</AlertTitle>
+              Convidado: {successValidation.user.nome}
+            </Alert>
+          )}
+          {alreadyValidated && (
+            <Alert severity="error">
+              <AlertTitle>Erro na validação</AlertTitle>
+              Convidado {successValidation.user.nome} já foi validado
+              anteriormente.
+            </Alert>
+          )}
           {errorValidation && (
             <Alert severity="error">
               <AlertTitle>Ingresso não é válido</AlertTitle>
@@ -126,10 +138,10 @@ function App() {
           {unauthorized && (
             <Alert severity="info">
               <AlertTitle>
-                Apresente o seu ingresso na entrada do evento
+                Apresente o seu ingresso na entrada do evento.
               </AlertTitle>
-              Você não precisa ler esse QR Code! Quem deve lê-lo é a pessoa
-              responsável no evento.
+              Esse QR Code deve ser escaneado apenas pela pessoa responsável no
+              evento.
             </Alert>
           )}
         </Card>
@@ -181,7 +193,7 @@ function App() {
               alignItems="center"
             >
               <CircularProgress />
-              <Typography>Te acalma</Typography>
+              <Typography>Aguarde</Typography>
             </Stack>
           )}
         </Card>
