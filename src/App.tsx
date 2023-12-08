@@ -74,8 +74,11 @@ function App() {
     }
   };
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const invite = searchParams.get("invite");
+
   useEffect(() => {
-    if (localStorage.getItem("sistema-ellen")) {
+    if (localStorage.getItem("sistema-ellen") && !invite) {
       setLoading(true);
       setTimeout(() => {
         setLoading(false);
@@ -85,8 +88,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const invite = searchParams.get("invite");
     const dataCriacao = new Date();
     const opcoes = { timeZone: "America/Sao_Paulo" };
     const dataFormatada = dataCriacao.toLocaleString("pt-BR", opcoes);
