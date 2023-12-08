@@ -19,6 +19,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const baseUrl =
     "https://sistema-convidados-backend.vercel.app/confirmar-convidado";
+  // const baseUrl = "http://localhost:3000/confirmar-convidado";
   const theme = useMemo(
     () =>
       createTheme({
@@ -54,7 +55,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
-  const [successValidation, setSuccessValidation] = useState(false);
+  const [successValidation, setSuccessValidation] = useState<any>(false);
   const [errorValidation, setErrorValidation] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -75,13 +76,17 @@ function App() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const invite = searchParams.get("invite");
+    const dataCriacao = new Date();
+    const opcoes = { timeZone: "America/Sao_Paulo" };
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", opcoes);
     if (invite) {
       setIsValidatingInvite(true);
       if (localStorage.getItem("sistema-ellen")) {
         axios
-          .put(baseUrl, { nome: invite })
+          .put(baseUrl, { nome: invite, dataValidacao: dataFormatada })
           .then((res) => {
-            setSuccessValidation(true);
+            console.log("res:", res);
+            setSuccessValidation(res.data);
             setErrorValidation(false);
           })
           .catch((err) => {
@@ -100,12 +105,18 @@ function App() {
         <ListaConvidados />
       ) : isValidatingInvite ? (
         <Card sx={{ p: 5, m: 2 }}>
-          {successValidation && (
-            <Alert severity="success">
-              <AlertTitle>Ingresso validado!</AlertTitle>
-              Bem vindo!
-            </Alert>
-          )}
+          {successValidation &&
+            (successValidation.user.confirmado ? (
+              <Alert severity="error">
+                <AlertTitle>Erro</AlertTitle>
+                Convidado {successValidation.user.nome} ja foi validado
+              </Alert>
+            ) : (
+              <Alert severity="success">
+                <AlertTitle>Ingresso validado!</AlertTitle>
+                convidado: {successValidation.user.nome}
+              </Alert>
+            ))}
           {errorValidation && (
             <Alert severity="error">
               <AlertTitle>Ingresso não é válido</AlertTitle>
@@ -137,11 +148,9 @@ function App() {
                 alignItems="center"
               >
                 <Typography variant="h4" textAlign="center">
-                  MSGCF
+                  Lista de Convidados
                 </Typography>
-                <Typography variant="h6" textAlign="center">
-                  Melhor Sistema de Gerenciamento de Convidados Já Feito
-                </Typography>
+                <Typography variant="h6" textAlign="center"></Typography>
                 <TextField
                   fullWidth
                   error={passwordError}

@@ -31,7 +31,7 @@ const ListaConvidados = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedConvidado, setSelectedConvidado] = useState<any | null>(null);
   const baseUrl = "https://sistema-convidados-backend.vercel.app/convidados";
-
+  // const baseUrl = "http://localhost:3000/convidados";
   const fetchConvidados = () => {
     setNovoConvidadoInput("");
     setFetchLoading(true);
@@ -40,12 +40,12 @@ const ListaConvidados = () => {
       .then((res) => {
         setFetchLoading(false);
         const listaOrdenada = res.data.sort((a: any, b: any) => {
-          if (a.confirmado === b.confirmado) {
-            return 0;
-          }
-          return a.confirmado ? 1 : -1;
+          // Ordena com base na data de criação em ordem decrescente
+          return (
+            new Date(b.dataCriacao).getTime() -
+            new Date(a.dataCriacao).getTime()
+          );
         });
-
         setListaConvidados(listaOrdenada);
         console.log(res);
       })
@@ -60,12 +60,20 @@ const ListaConvidados = () => {
   }, []);
 
   const handleAddConvidado = () => {
+    const dataCriacao = new Date();
+    const opcoes = { timeZone: "America/Sao_Paulo" };
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", opcoes);
     if (novoConvidadoInput.includes(",")) {
       const convidadosArray = novoConvidadoInput.split(",");
 
       convidadosArray.forEach((convidado) => {
         axios
-          .post(baseUrl, { nome: convidado, confirmado: false })
+          .post(baseUrl, {
+            nome: convidado,
+            confirmado: false,
+            dataCriacao: dataFormatada,
+            dataValidacao: false,
+          })
           .then((res) => {
             fetchConvidados();
           })
@@ -73,7 +81,12 @@ const ListaConvidados = () => {
       });
     } else {
       axios
-        .post(baseUrl, { nome: novoConvidadoInput, confirmado: false })
+        .post(baseUrl, {
+          nome: novoConvidadoInput,
+          confirmado: false,
+          dataCriacao: dataFormatada,
+          dataValidacao: false,
+        })
         .then((res) => {
           fetchConvidados();
         })
@@ -94,30 +107,41 @@ const ListaConvidados = () => {
         });
     }
   };
-
   const handleConfirmDialogOpen = (convidado: any) => {
     setSelectedConvidado(convidado);
     setConfirmDialogOpen(true);
   };
 
   const handleValidateConvidado = () => {
+    const dataCriacao = new Date();
+    const opcoes = { timeZone: "America/Sao_Paulo" };
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", opcoes);
     if (selectedConvidado) {
-      const updatedConvidado = { ...selectedConvidado, confirmado: true };
+      const updatedConvidado = {
+        ...selectedConvidado,
+        confirmado: true,
+        dataValidacao: dataFormatada,
+      };
       axios
         .put(`${baseUrl}/${selectedConvidado.id}`, updatedConvidado)
         .then((res) => {
           setConfirmDialogOpen(false);
           fetchConvidados();
+          const { nome, dataValidacao } = res.data;
+          alert(`Ingresso de ${nome} validado com sucesso em ${dataValidacao}`);
         })
         .catch((err) => {
           alert(err.message);
         });
     }
   };
-
   const handleInvalidateConvidado = () => {
     if (selectedConvidado) {
-      const updatedConvidado = { ...selectedConvidado, confirmado: false };
+      const updatedConvidado = {
+        ...selectedConvidado,
+        confirmado: false,
+        dataValidacao: false,
+      };
       axios
         .put(`${baseUrl}/${selectedConvidado.id}`, updatedConvidado)
         .then((res) => {
@@ -176,6 +200,7 @@ const ListaConvidados = () => {
           >
             Limpar lista
           </Button>
+
           {/* <Button
             size="small"
             variant="outlined"
@@ -197,12 +222,20 @@ const ListaConvidados = () => {
         <Divider sx={{ my: 2 }} />
 
         {listaConvidados.length > 0 ? (
-          <TableContainer component={Paper}>
+          <TableContainer
+            component={Paper}
+            sx={{ overflowY: "scroll", height: "50vh" }}
+          >
             <Table aria-label="simple table" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>Nome</TableCell>
+                  <TableCell align="right">Criado em</TableCell>
+
+                  <TableCell align="right">Validado em</TableCell>
+
                   <TableCell align="right">Ingresso validado</TableCell>
+                  {/* Adicionado */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -217,6 +250,12 @@ const ListaConvidados = () => {
                     <TableCell component="th" scope="row">
                       {convidado.nome}
                     </TableCell>
+                    <TableCell align="right">
+                      {convidado.dataCriacao || "-"}
+                    </TableCell>{" "}
+                    <TableCell align="right">
+                      {convidado.dataValidacao || "-"}
+                    </TableCell>{" "}
                     <TableCell align="right">
                       {convidado.confirmado ? "Sim ✅" : "Não ❌"}
                     </TableCell>
